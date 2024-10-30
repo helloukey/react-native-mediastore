@@ -1,5 +1,5 @@
 {
-  "name": "@kunalukey/-native-mediastore",
+  "name": "@kunalukey/react-native-mediastore",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
