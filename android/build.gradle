@@ -21,10 +21,10 @@ apply plugin: 'com.facebook.react'
 
 android {
 
-  compileSdkVersion safeExtGet('compileSdkVersion', 30)
+  compileSdkVersion safeExtGet('compileSdkVersion', 34)
   defaultConfig {
-      minSdkVersion safeExtGet('minSdkVersion', 21)
-      targetSdkVersion safeExtGet('targetSdkVersion', 28)
+      minSdkVersion safeExtGet('minSdkVersion', 23)
+      targetSdkVersion safeExtGet('targetSdkVersion', 34)
     }
   namespace "com.kunalukey.mediastore"
 }
