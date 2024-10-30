@@ -1,6 +1,9 @@
 {
   "name": "react-native-mediastore",
   "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Delete Media from Android devices using the new scoped storage.",
   "react-native": "js/index.ts",
   "types": "lib/typescript/index.d.ts",
