@@ -1,0 +1,45 @@
+{
+  "name": "react-native-mediastore",
+  "version": "1.0.0",
+  "description": "Delete Media from Android devices using the new scoped storage.",
+  "react-native": "js/index.ts",
+  "types": "lib/typescript/index.d.ts",
+  "source": "js/index",
+  "files": [
+    "js",
+    "lib",
+    "android",
+    "ios",
+    "rtn-delete-media.podspec",
+    "!android/build",
+    "!ios/build",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "repository": "https://github.com/helloukey/react-native-mediastore/",
+  "author": "Kunal Ukey - https://github.com/helloukey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/helloukey/react-native-mediastore/issues"
+  },
+  "homepage": "https://github.com/helloukey/react-native-mediastore#readme",
+  "devDependencies": {},
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "ReactNativeMediaStoreSpec",
+    "type": "modules",
+    "jsSrcsDir": "js",
+    "android": {
+      "javaPackageName": "com.kunalukey.mediastore"
+    }
+  }
+}
