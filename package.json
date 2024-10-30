@@ -1,10 +1,10 @@
 {
   "name": "@kunalukey/react-native-mediastore",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Delete Media from Android devices using the new scoped storage.",
+  "description": "Easily delete photos and videos from android using new scoped storage MediaStore API.",
   "react-native": "js/index.ts",
   "types": "lib/typescript/index.d.ts",
   "source": "js/index",
@@ -21,9 +21,14 @@
     "!**/__mocks__"
   ],
   "keywords": [
+    "@kunalukey/react-native-mediastore",
+    "react-native-media-library",
     "react-native",
-    "ios",
-    "android"
+    "react-native-fs",
+    "react-native-file-access",
+    "react-native-mediastore",
+    "react-native-scoped-storage",
+    "react-native-file-system"
   ],
   "repository": "https://github.com/helloukey/react-native-mediastore/",
   "author": "Kunal Ukey - https://github.com/helloukey",
