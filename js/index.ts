@@ -1,4 +1,4 @@
-import RTNDeleteMedia from "./NativeDeleteMedia";
+import ReactNativeMediaStore from "./NativeDeleteMedia";
 
 export type ErrorCodes =
   | "ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED"
@@ -11,9 +11,9 @@ export type ErrorCodes =
 
 export class DeleteMedia {
   static deletePhotos(uris: Array<string>): Promise<void> {
-    return RTNDeleteMedia.deletePhotos(uris);
+    return ReactNativeMediaStore.deletePhotos(uris);
   }
   static deleteVideos(uris: Array<string>): Promise<void> {
-    return RTNDeleteMedia.deleteVideos(uris);
+    return ReactNativeMediaStore.deleteVideos(uris);
   }
 }

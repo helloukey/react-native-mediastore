@@ -45,7 +45,7 @@ public class DeleteMediaModule extends NativeDeleteMediaSpec {
     private static final String ERROR_UNEXPECTED = "ERROR_UNEXPECTED";
 
 
-    public static String NAME = "RTNDeleteMedia";
+    public static String NAME = "ReactNativeMediaStore";
 
     DeleteMediaModule(ReactApplicationContext context) {
         super(context);

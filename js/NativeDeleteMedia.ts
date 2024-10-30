@@ -6,4 +6,4 @@ export interface Spec extends TurboModule {
   deleteVideos(uris: Array<string>): Promise<void>;
 }
 
-export default TurboModuleRegistry.get<Spec>("RTNDeleteMedia") as Spec;
+export default TurboModuleRegistry.get<Spec>("ReactNativeMediaStore") as Spec;
