@@ -17,7 +17,6 @@ import com.kunalukey.mediastore.NativeDeleteMediaSpec;
 import androidx.activity.result.IntentSenderRequest;
 import java.util.ArrayList;
 import java.util.Collections;
-import andorid.content.ContentValues;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
