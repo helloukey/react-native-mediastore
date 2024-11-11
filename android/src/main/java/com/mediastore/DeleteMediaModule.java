@@ -257,52 +257,54 @@ public void deleteVideos(ReadableArray urisString, Promise promise) {
 
 // Rename Video
 @Override
-public void renameVideo(String uriString, String newName, Promise promise) {
+public void renameVideo(String videoUri, String newVideoName, Promise promise) {
     if (!checkPermissions()) {
         promise.reject(ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED, "Error: WRITE_EXTERNAL_STORAGE permission is needed to rename media");
         return;
     }
 
-    if (uriString == null || uriString.isEmpty()) {
-        promise.reject(ERROR_URIS_PARAMETER_NULL, "Error: URI parameter is null or empty");
+    if (videoUri == null || newVideoName == null) {
+        promise.reject(ERROR_URIS_PARAMETER_NULL, "Error: videoUri or newVideoName parameter is null");
         return;
     }
 
-    if (newName == null || newName.isEmpty()) {
-        promise.reject("ERROR_INVALID_NAME", "Error: new name parameter is null or empty");
-        return;
-    }
+    // Extract the file extension (e.g., .mp4)
+    String fileExtension = videoUri.substring(videoUri.lastIndexOf("."));
+    String newFilePath = videoUri.substring(0, videoUri.lastIndexOf("/") + 1) + newVideoName + fileExtension;
 
+    // Update the file name in the MediaStore
     ContentResolver resolver = getReactApplicationContext().getContentResolver();
-    Uri uri = Uri.parse(uriString);
+    Uri videoContentUri = Uri.parse(videoUri);
 
-    // Query to find the video in the MediaStore
-    String[] projection = {MediaStore.Video.Media._ID};
-    String selection = MediaStore.Video.Media.DATA + " = ?";
-    String[] selectionArgs = new String[]{uri.getPath()};
+    // Set up the projection to get the MediaStore ID
+    String[] projection = { MediaStore.Video.Media._ID };
+    String selection = MediaStore.Video.Media.DATA + "=?";
+    String[] selectionArgs = { videoUri };
 
-    try (Cursor cursor = resolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null)) {
-        if (cursor != null && cursor.moveToFirst()) {
-            long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
+    Cursor cursor = resolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
 
-            // Update the DISPLAY_NAME field with the new name
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);
+    if (cursor != null && cursor.moveToFirst()) {
+        long videoId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
+        Uri updateUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, videoId);
 
-            Uri updateUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
-            int rowsUpdated = resolver.update(updateUri, contentValues, null, null);
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Video.Media.DATA, newFilePath);
+        values.put(MediaStore.Video.Media.DISPLAY_NAME, newVideoName + fileExtension);  // Update display name
 
-            if (rowsUpdated > 0) {
-                promise.resolve(null);  // Successfully renamed
-            } else {
-                promise.reject("ERROR_RENAME_FAILED", "Error: failed to rename the video");
-            }
+        int rowsUpdated = resolver.update(updateUri, values, null, null);
+        if (rowsUpdated > 0) {
+            promise.resolve(newFilePath);  // Successfully renamed
         } else {
-            promise.reject(ERROR_URIS_NOT_FOUND, "Error: video not found on device");
+            promise.reject(ERROR_UNEXPECTED, "Failed to rename video.");
         }
-    } catch (Exception e) {
-        promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred while renaming video: " + e.getMessage());
+    } else {
+        promise.reject(ERROR_URIS_NOT_FOUND, "Video URI not found.");
+    }
+
+    if (cursor != null) {
+        cursor.close();
     }
 }
+
 
 }
