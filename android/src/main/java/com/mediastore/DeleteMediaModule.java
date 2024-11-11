@@ -21,7 +21,6 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -251,99 +250,6 @@ public void deleteVideos(ReadableArray urisString, Promise promise) {
         ActivityResultLauncherWrapper.getActivityResultLauncher().launch(senderRequest);
     } catch (Exception e) {
         promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during media deletion: " + e.getMessage());
-    }
-}
-
-// Rename Video
-@Override
-public void renameVideo(String filePath, String newFileName, Promise promise) {
-    // Check for WRITE_EXTERNAL_STORAGE permission
-    if (!checkPermissions()) {
-        promise.reject("ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED", "Error: WRITE_EXTERNAL_STORAGE permission is needed to rename media");
-        return;
-    }
-
-    // Validate input parameters
-    if (filePath == null || filePath.isEmpty()) {
-        promise.reject("ERROR_URIS_PARAMETER_NULL", "Error: file path is null or empty");
-        return;
-    }
-
-    if (newFileName == null || newFileName.isEmpty()) {
-        promise.reject("ERROR_URIS_PARAMETER_INVALID", "Error: new file name is invalid");
-        return;
-    }
-
-    // Get the ContentResolver
-    ContentResolver resolver = getReactApplicationContext().getContentResolver();
-    
-    // Prepare projection and selection for querying the file by path
-    String[] projection = { MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME };
-    String selection = MediaStore.Video.Media.DATA + " = ?";
-    String[] selectionArgs = new String[]{ filePath };
-
-    // Query the MediaStore to get the video
-    try (Cursor cursor = resolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null)) {
-        if (cursor != null && cursor.moveToFirst()) {
-            long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
-            Uri videoContentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
-
-            // Prepare the content values to rename the video
-            ContentValues values = new ContentValues();
-            String fileExtension = filePath.substring(filePath.lastIndexOf("."));
-            values.put(MediaStore.Video.Media.DISPLAY_NAME, newFileName + fileExtension);
-
-            ArrayList<Uri> uriList = new ArrayList<>();
-            uriList.add(videoContentUri);
-
-            try {
-                // Prepare IntentSender to request permission to rename the file (for Android 10+)
-                IntentSender intentSender = MediaStore.createWriteRequest(resolver, uriList).getIntentSender();
-                IntentSenderRequest senderRequest = new IntentSenderRequest.Builder(intentSender)
-                    .setFillInIntent(null)
-                    .setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION, 0)
-                    .build();
-
-                // Check if ActivityResultLauncherWrapper is initialized
-                if (!ActivityResultLauncherWrapper.isInitialized()) {
-                    promise.reject("ERROR_MODULE_NOT_INITIALIZED", "Error: the module was not initialized in MainActivity.java, follow the module page instructions.");
-                    return;
-                }
-
-                // Set callback for result from the IntentSender
-                ActivityResultLauncherWrapper.setOnResult((boolean success, int error_code) -> {
-                    if (!success) {
-                        if (error_code == RESULT_CANCELED) {
-                            promise.reject("ERROR_USER_REJECTED", "The user rejected the rename operation");
-                        } else {
-                            promise.reject("ERROR_UNEXPECTED", "OnActivityResult returned error code: " + error_code);
-                        }
-                    } else {
-                        try {
-                            // Try to update the video with the new name
-                            int updatedRows = resolver.update(videoContentUri, values, null, null);
-                            if (updatedRows > 0) {
-                                promise.resolve("Video renamed successfully");
-                            } else {
-                                promise.reject("ERROR_UNEXPECTED", "Error: Failed to rename the video");
-                            }
-                        } catch (Exception e) {
-                            promise.reject("ERROR_UNEXPECTED", "Unexpected error occurred during renaming: " + e.getMessage());
-                        }
-                    }
-                });
-
-                // Launch the intent to request permission
-                ActivityResultLauncherWrapper.getActivityResultLauncher().launch(senderRequest);
-
-            } catch (Exception e) {
-                promise.reject("ERROR_UNEXPECTED", "Unexpected error occurred while preparing rename request: " + e.getMessage());
-            }
-        } else {
-            promise.reject("ERROR_URIS_NOT_FOUND", "Error: Video file not found in MediaStore");
-        }
-    } catch (Exception e) {
-        promise.reject("ERROR_UNEXPECTED", "Unexpected error occurred during renaming: " + e.getMessage());
     }
 }
 
