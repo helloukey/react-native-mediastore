@@ -17,7 +17,7 @@ import com.kunalukey.mediastore.NativeDeleteMediaSpec;
 import androidx.activity.result.IntentSenderRequest;
 import java.util.ArrayList;
 import java.util.Collections;
-
+import andorid.content.ContentValues;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
@@ -257,46 +257,88 @@ public void deleteVideos(ReadableArray urisString, Promise promise) {
 
 // Rename Video
 @Override
-public void renameVideo(String videoUriString, String newName, Promise promise) {
-    // Check if newName is null or empty
-    if (newName == null || newName.isEmpty()) {
-        promise.reject(ERROR_URIS_PARAMETER_INVALID, "New name cannot be empty");
+public void renameVideo(String uriString, String newName, Promise promise) {
+    // Check if permission is granted for writing to external storage
+    if (!checkPermissions()) {
+        promise.reject(ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED, "Error: WRITE_EXTERNAL_STORAGE permission is needed to rename media");
+        return;
+    }
+
+    // Check if the URI is provided
+    if (uriString == null || uriString.isEmpty()) {
+        promise.reject(ERROR_URIS_PARAMETER_INVALID, "Error: URI is required to rename");
+        return;
+    }
+
+    // Parse the URI and validate
+    Uri uri;
+    try {
+        uri = Uri.parse(uriString);
+        if (uri == null) {
+            promise.reject(ERROR_URIS_PARAMETER_INVALID, "Error: URI is invalid");
+            return;
+        }
+    } catch (Exception e) {
+        promise.reject(ERROR_URIS_PARAMETER_INVALID, "Error: Invalid URI format");
+        return;
+    }
+
+    // Prepare for querying the content provider
+    ContentResolver resolver = getReactApplicationContext().getContentResolver();
+    String[] projection = { MediaStore.Video.Media._ID, MediaStore.Video.Media.DATA };
+    String selection = MediaStore.Video.Media.DATA + " = ?";
+    String[] selectionArgs = { uri.getPath() };
+
+    // Query the MediaStore to find the file
+    Cursor cursor = resolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
+    Uri updateUri = null;
+    if (cursor != null && cursor.moveToFirst()) {
+        long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
+        updateUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
+    }
+    if (cursor != null) cursor.close();
+
+    // If the URI was not found, reject the promise
+    if (updateUri == null) {
+        promise.reject(ERROR_URIS_NOT_FOUND, "Error: URI not found on device");
         return;
     }
 
     try {
-        Uri videoUri = Uri.parse(videoUriString);
-        ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+        // Create a ContentValues object to update the video name
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Video.Media.DISPLAY_NAME, newName);
 
-        // Check if the video exists in the MediaStore
-        String[] projection = {MediaStore.Video.Media._ID};
-        String selection = MediaStore.Video.Media._ID + "=?";
-        String[] selectionArgs = {videoUri.getLastPathSegment()};
+        // Create a write request for renaming
+        IntentSender intentSender = MediaStore.createWriteRequest(resolver, Collections.singletonList(updateUri)).getIntentSender();
+        IntentSenderRequest senderRequest = new IntentSenderRequest.Builder(intentSender)
+            .setFillInIntent(null)
+            .setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION, 0)
+            .build();
 
-        Cursor cursor = contentResolver.query(videoUri, projection, selection, selectionArgs, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            long videoId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
-            Uri updateUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, videoId);
-
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);  // Set new name
-            contentValues.put(MediaStore.Video.Media.IS_PENDING, 1);
-            contentResolver.update(updateUri, contentValues, null, null);
-
-            // Commit the new name after setting pending
-            contentValues.clear();
-            contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);  // Update name
-            contentValues.put(MediaStore.Video.Media.IS_PENDING, 0);
-            contentResolver.update(updateUri, contentValues, null, null);
-
-            promise.resolve(null);  // Successful rename
-
-            if (cursor != null) cursor.close();
-        } else {
-            promise.reject(ERROR_URIS_PARAMETER_INVALID, "Video not found in MediaStore");
+        // Ensure ActivityResultLauncherWrapper is initialized
+        if (!ActivityResultLauncherWrapper.isInitialized()) {
+            promise.reject(ERROR_MODULE_NOT_INITIALIZED, "Error: the module was not initialized in MainActivity.java, follow the module page instructions.");
+            return;
         }
 
+        // Set the callback for handling the result of the intent
+        ActivityResultLauncherWrapper.setOnResult((boolean success, int error_code) -> {
+            if (!success) {
+                if (error_code == RESULT_CANCELED) {
+                    promise.reject(ERROR_USER_REJECTED, "The user rejected the renaming of the media");
+                } else {
+                    promise.reject(ERROR_UNEXPECTED, "OnActivityResult returned error code: " + error_code);
+                }
+            } else {
+                promise.resolve(null); // Renaming succeeded
+            }
+        });
+
+        // Launch the intent to rename the video
+        ActivityResultLauncherWrapper.getActivityResultLauncher().launch(senderRequest);
     } catch (Exception e) {
+        // Catch unexpected errors
         promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during video renaming: " + e.getMessage());
     }
 }
