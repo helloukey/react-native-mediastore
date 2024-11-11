@@ -258,46 +258,48 @@ public void deleteVideos(ReadableArray urisString, Promise promise) {
 // Rename Video
 @Override
 public void renameVideo(String videoUriString, String newName, Promise promise) {
-        if (TextUtils.isEmpty(newName)) {
-            promise.reject(ERROR_URIS_PARAMETER_INVALID, "New name cannot be empty");
-            return;
-        }
-
-        try {
-            Uri videoUri = Uri.parse(videoUriString);
-            ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
-
-            // Check if the video exists in the MediaStore
-            String[] projection = {MediaStore.Video.Media._ID};
-            String selection = MediaStore.Video.Media._ID + "=?";
-            String[] selectionArgs = {videoUri.getLastPathSegment()};
-
-            Cursor cursor = contentResolver.query(videoUri, projection, selection, selectionArgs, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                long videoId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
-                Uri updateUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, videoId);
-
-                ContentValues contentValues = new ContentValues();
-                contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);  // Set new name
-                contentValues.put(MediaStore.Video.Media.IS_PENDING, 1);
-                contentResolver.update(updateUri, contentValues, null, null);
-
-                // Commit the new name after setting pending
-                contentValues.clear();
-                contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);  // Update name
-                contentValues.put(MediaStore.Video.Media.IS_PENDING, 0);
-                contentResolver.update(updateUri, contentValues, null, null);
-
-                promise.resolve(null);  // Successful rename
-
-                if (cursor != null) cursor.close();
-            } else {
-                promise.reject(ERROR_URIS_PARAMETER_INVALID, "Video not found in MediaStore");
-            }
-
-        } catch (Exception e) {
-            promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during video renaming: " + e.getMessage());
-        }
+    // Check if newName is null or empty
+    if (newName == null || newName.isEmpty()) {
+        promise.reject(ERROR_URIS_PARAMETER_INVALID, "New name cannot be empty");
+        return;
     }
+
+    try {
+        Uri videoUri = Uri.parse(videoUriString);
+        ContentResolver contentResolver = getReactApplicationContext().getContentResolver();
+
+        // Check if the video exists in the MediaStore
+        String[] projection = {MediaStore.Video.Media._ID};
+        String selection = MediaStore.Video.Media._ID + "=?";
+        String[] selectionArgs = {videoUri.getLastPathSegment()};
+
+        Cursor cursor = contentResolver.query(videoUri, projection, selection, selectionArgs, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            long videoId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
+            Uri updateUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, videoId);
+
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);  // Set new name
+            contentValues.put(MediaStore.Video.Media.IS_PENDING, 1);
+            contentResolver.update(updateUri, contentValues, null, null);
+
+            // Commit the new name after setting pending
+            contentValues.clear();
+            contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, newName);  // Update name
+            contentValues.put(MediaStore.Video.Media.IS_PENDING, 0);
+            contentResolver.update(updateUri, contentValues, null, null);
+
+            promise.resolve(null);  // Successful rename
+
+            if (cursor != null) cursor.close();
+        } else {
+            promise.reject(ERROR_URIS_PARAMETER_INVALID, "Video not found in MediaStore");
+        }
+
+    } catch (Exception e) {
+        promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during video renaming: " + e.getMessage());
+    }
+}
+
 
 }
