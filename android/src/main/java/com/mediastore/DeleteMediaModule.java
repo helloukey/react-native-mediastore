@@ -259,18 +259,18 @@ public void deleteVideos(ReadableArray urisString, Promise promise) {
 public void renameVideo(String filePath, String newFileName, Promise promise) {
     // Check for WRITE_EXTERNAL_STORAGE permission
     if (!checkPermissions()) {
-        promise.reject(ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED, "Error: WRITE_EXTERNAL_STORAGE permission is needed to rename media");
+        promise.reject("ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED", "Error: WRITE_EXTERNAL_STORAGE permission is needed to rename media");
         return;
     }
 
     // Validate input parameters
     if (filePath == null || filePath.isEmpty()) {
-        promise.reject(ERROR_INVALID_PARAMETERS, "Error: file path is null or empty");
+        promise.reject("ERROR_URIS_PARAMETER_NULL", "Error: file path is null or empty");
         return;
     }
 
     if (newFileName == null || newFileName.isEmpty()) {
-        promise.reject(ERROR_INVALID_PARAMETERS, "Error: new file name is invalid");
+        promise.reject("ERROR_URIS_PARAMETER_INVALID", "Error: new file name is invalid");
         return;
     }
 
@@ -306,7 +306,7 @@ public void renameVideo(String filePath, String newFileName, Promise promise) {
 
                 // Check if ActivityResultLauncherWrapper is initialized
                 if (!ActivityResultLauncherWrapper.isInitialized()) {
-                    promise.reject(ERROR_MODULE_NOT_INITIALIZED, "Error: the module was not initialized in MainActivity.java, follow the module page instructions.");
+                    promise.reject("ERROR_MODULE_NOT_INITIALIZED", "Error: the module was not initialized in MainActivity.java, follow the module page instructions.");
                     return;
                 }
 
@@ -314,9 +314,9 @@ public void renameVideo(String filePath, String newFileName, Promise promise) {
                 ActivityResultLauncherWrapper.setOnResult((boolean success, int error_code) -> {
                     if (!success) {
                         if (error_code == RESULT_CANCELED) {
-                            promise.reject(ERROR_USER_REJECTED, "The user rejected the rename operation");
+                            promise.reject("ERROR_USER_REJECTED", "The user rejected the rename operation");
                         } else {
-                            promise.reject(ERROR_UNEXPECTED, "OnActivityResult returned error code: " + error_code);
+                            promise.reject("ERROR_UNEXPECTED", "OnActivityResult returned error code: " + error_code);
                         }
                     } else {
                         try {
@@ -325,10 +325,10 @@ public void renameVideo(String filePath, String newFileName, Promise promise) {
                             if (updatedRows > 0) {
                                 promise.resolve("Video renamed successfully");
                             } else {
-                                promise.reject(ERROR_RENAME_FAILED, "Error: Failed to rename the video");
+                                promise.reject("ERROR_UNEXPECTED", "Error: Failed to rename the video");
                             }
                         } catch (Exception e) {
-                            promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during renaming: " + e.getMessage());
+                            promise.reject("ERROR_UNEXPECTED", "Unexpected error occurred during renaming: " + e.getMessage());
                         }
                     }
                 });
@@ -337,13 +337,13 @@ public void renameVideo(String filePath, String newFileName, Promise promise) {
                 ActivityResultLauncherWrapper.getActivityResultLauncher().launch(senderRequest);
 
             } catch (Exception e) {
-                promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred while preparing rename request: " + e.getMessage());
+                promise.reject("ERROR_UNEXPECTED", "Unexpected error occurred while preparing rename request: " + e.getMessage());
             }
         } else {
-            promise.reject(ERROR_URIS_NOT_FOUND, "Error: Video file not found in MediaStore");
+            promise.reject("ERROR_URIS_NOT_FOUND", "Error: Video file not found in MediaStore");
         }
     } catch (Exception e) {
-        promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during renaming: " + e.getMessage());
+        promise.reject("ERROR_UNEXPECTED", "Unexpected error occurred during renaming: " + e.getMessage());
     }
 }
 
