@@ -22,6 +22,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
