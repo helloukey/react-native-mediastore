@@ -16,7 +16,4 @@ export class DeleteMedia {
   static deleteVideos(uris: Array<string>): Promise<void> {
     return ReactNativeMediaStore.deleteVideos(uris);
   }
-  static renameVideo(uri: string, newName: string): Promise<void> {
-    return ReactNativeMediaStore.renameVideo(uri, newName);
-  }
 }
