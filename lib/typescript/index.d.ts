@@ -10,4 +10,5 @@ export declare type ErrorCodes =
 export declare class DeleteMedia {
   static deletePhotos(uris: Array<string>): Promise<void>;
   static deleteVideos(uris: Array<string>): Promise<void>;
+  static renameVideo(uri: string, newName: string): Promise<void>;
 }

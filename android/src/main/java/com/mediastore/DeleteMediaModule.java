@@ -253,4 +253,77 @@ public void deleteVideos(ReadableArray urisString, Promise promise) {
         promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during media deletion: " + e.getMessage());
     }
 }
+
+// Rename video
+@Override
+public void renameVideo(String uriString, String newName, Promise promise) {
+    if (!checkPermissions()) {
+        promise.reject(ERROR_WRITE_EXTERNAL_STORAGE_PERMISSION_NEEDED, "WRITE_EXTERNAL_STORAGE permission is needed to rename media");
+        return;
+    }
+
+    if (uriString == null || newName == null || newName.isEmpty()) {
+        promise.reject(ERROR_URIS_PARAMETER_INVALID, "Invalid parameters: URI or new name is null or empty");
+        return;
+    }
+
+    Uri uri = Uri.parse(uriString);
+    ContentResolver resolver = getReactApplicationContext().getContentResolver();
+    String[] projection = {MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME};
+
+    // Query to get the video ID and name
+    Cursor cursor = resolver.query(uri, projection, null, null, null);
+    if (cursor == null || !cursor.moveToFirst()) {
+        if (cursor != null) cursor.close();
+        promise.reject(ERROR_URIS_NOT_FOUND, "Error: video URI not found on device");
+        return;
+    }
+
+    // Get the original display name
+    String originalName = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME));
+    cursor.close();
+
+    // Get the file extension from the original name
+    String extension = originalName.contains(".") ? originalName.substring(originalName.lastIndexOf(".")) : "";
+    String newDisplayName = newName + extension;
+
+    // Update the display name in ContentValues
+    ContentValues values = new ContentValues();
+    values.put(MediaStore.Video.Media.DISPLAY_NAME, newDisplayName);
+
+    try {
+        IntentSender intentSender = MediaStore.createWriteRequest(resolver, Collections.singletonList(uri)).getIntentSender();
+        IntentSenderRequest senderRequest = new IntentSenderRequest.Builder(intentSender)
+            .setFillInIntent(null)
+            .setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION, 0)
+            .build();
+
+        if (!ActivityResultLauncherWrapper.isInitialized()) {
+            promise.reject(ERROR_MODULE_NOT_INITIALIZED, "Error: the module was not initialized in MainActivity.java. Please follow the module setup instructions.");
+            return;
+        }
+
+        ActivityResultLauncherWrapper.setOnResult((boolean success, int error_code) -> {
+            if (!success) {
+                if (error_code == RESULT_CANCELED) {
+                    promise.reject(ERROR_USER_REJECTED, "User canceled the rename operation");
+                } else {
+                    promise.reject(ERROR_UNEXPECTED, "OnActivityResult returned error code: " + error_code);
+                }
+            } else {
+                // Apply the new name
+                int rowsUpdated = resolver.update(uri, values, null, null);
+                if (rowsUpdated > 0) {
+                    promise.resolve("Video renamed successfully to " + newDisplayName);
+                } else {
+                    promise.reject(ERROR_UNEXPECTED, "Unable to rename the video");
+                }
+            }
+        });
+
+        ActivityResultLauncherWrapper.getActivityResultLauncher().launch(senderRequest);
+    } catch (Exception e) {
+        promise.reject(ERROR_UNEXPECTED, "Unexpected error occurred during renaming: " + e.getMessage());
+    }
+}
 }
