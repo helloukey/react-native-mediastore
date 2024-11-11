@@ -53,7 +53,7 @@ It uses the native `MediaStore.createDeleteRequest` function to launch the andro
     import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
     import com.facebook.react.defaults.DefaultReactActivityDelegate;
 
-    import com.rtndeletemedia.DeleteMediaModule;
+    import com.kunalukey.mediastore.DeleteMediaModule;
     import android.os.Bundle;
 
     public class MainActivity extends ReactActivity {
